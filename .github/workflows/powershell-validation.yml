@@ -1,0 +1,16 @@
+name: PowerShell validation
+on:
+  push:
+    paths: ['**/*.ps1','.github/workflows/powershell-validation.yml']
+  pull_request:
+    paths: ['**/*.ps1']
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: pwsh
+        run: |
+          $bad=$false
+          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {$t=$null;$e=$null;[void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$t,[ref]$e);if($e){$bad=$true;$e|ForEach-Object{Write-Error "$($_.Extent.File):$($_.Extent.StartLineNumber) $($_.Message)"}}}
+          if($bad){exit 1}
